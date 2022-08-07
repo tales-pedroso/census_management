@@ -71,21 +71,9 @@ class ConlcDataPage(Conlc):
             raise ValueError(f'Method set_current_page expects a digit from 1 to 999999. Got {value}')
             
         self.current_page_cue['substring'] = value
-        
-        
 
 if __name__ == '__main__':
-    path = 'C:\\Users\\Tales\\Desktop\\census_management\\test.txt'
-    with open(path, 'r', encoding = 'utf-8') as f:
-        string = f.read()
-        
-
-    conlc_data_page = ConlcDataPage()
-    
-    conlc_data_page.current_page_cue['substring']
-    
-    conlc_data_page.set_current_page('2')
-    result = conlc_data_page.get_current_page_from_string(string)
+   pass
     
     
 
