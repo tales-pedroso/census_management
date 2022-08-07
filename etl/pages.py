@@ -48,7 +48,7 @@ class ConlcDataPage(Conlc):
         return is_valid
     
     def is_there_a_next_page(self, string):
-        is_valid = self._is_valid(string, **self.conlc_current_page_cue)
+        is_valid = self._is_valid(string, **self.next_page_cue)
         return is_valid
         
     def get_current_page_from_string(self, string):

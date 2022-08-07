@@ -1,0 +1,24 @@
+  __ SIAFI2022-DOCUMENTO-CONSULTA-CONLC (CONSULTA LISTA DE CREDORES)____________
+  05/08/22  18:52                                      USUARIO : TALES PEDROSO  
+                                                       PAGINA     1             
+                                                                                
+ UG/GESTAO EMITENTE: 114601 / 11301 - FUNDACAO IBGE-ADMINISTRACAO CENTRAL/RJ    
+      NUMERO   ATUALIZADO EM QTD              VALOR TOTAL   NUMERO OB   SIT. OBS
+    2022LC520172 24Jun2022 000193             212.991,46  2022OB868702 CANC.P F 
+    2022LC520173 28Jun2022 000291              34.236,51  2022OB868738        F 
+    2022LC520174 30Jun2022 001028             288.042,26  2022OB868857 CANC.P F 
+    2022LC520175 30Jun2022 000214              22.054,67  2022OB868859        F 
+    2022LC520176 30Jun2022 000028               4.427,87  2022OB868903        F 
+    2022LC520177 04Jul2022 024701          62.896.625,96  2022OB871006 CANC.P F 
+    2022LC520178 01Jul2022 000165              39.249,63  2022OB868951 CANC.P F 
+    2022LC520179 05Jul2022 000938             199.498,95  2022OB871035 CANC.P F 
+    2022LC520180 06Jul2022 000444             108.269,03  2022OB871750 CANC.P F 
+    2022LC520181 06Jul2022 000177              38.430,04  2022OB874327        F 
+    2022LC520182 08Jul2022 000316             127.262,23  2022OB874379 CANC.P F 
+    2022LC520183 11Jul2022 001365             244.554,90  2022OB874706 CANC.P F 
+    2022LC520184 08Jul2022 000125              62.251,52  2022OB876013 CANC.P F 
+    2022LC520185 12Jul2022 000433              84.662,61  2022OB876051        F 
+    2022LC520186 12Jul2022 000316              95.278,17  2022OB876121        F 
+                                                              CONTINUA...       
+  PF1=AJUDA PF2=DETALHA PF3=SAI PF8=AVANCA PF10=TRANSF. PF12=RETORNA            
+                                                                                

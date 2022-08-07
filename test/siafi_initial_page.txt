@@ -1,0 +1,24 @@
+  TELA 002                  -  MENU  DE  SISTEMAS  -                            
+ CODIGO : 36912843883                                         BASE: SAO01       
+ USUARIO: TALES DE ASSIS PEDROSO                              DATA: 06/08/2022  
+ NETNAME: AWVAE5KV     ULTIMO ACESSO: 06/08/2022  03:38:26    HORA: 05:11:08    
+                                                                                
+  POSICIONE O CURSOR NA LINHA DO SISTEMA DESEJADO E TECLE <ENTER>:              
+                                                                                
+         NOME              BASE         PSEUDO  DESCRICAO                       
+         ----              ----         ------  ---------                       
+                                                                                
+         SIAFI             BSB03        SF      SISTEMA DE ADMIN. FINANCEIRA    
+         SIAPE             BSB02        SA      SISTEMA INT. ADM. REC. HUMANOS  
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+  COMANDO ==>  _______________________________________________________________  
+                                                                                
+  PF3-SAI  PF4=LIBERA                       PF9=LIMPA PF10=PSEUDO PF11=AUTO T02 
