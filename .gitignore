@@ -1,4 +1,6 @@
 env/
 data_lake/
-History.odt
-src/__pycache__
+test/
+setup/
+etl/__pycache__
+etl/credentials.py
