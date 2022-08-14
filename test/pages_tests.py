@@ -9,10 +9,10 @@ strings used are too long to type in here (length = 1966)
 actual files from the system will be used for testing purposes 
 '''
 FOLDER = dirname(__file__)
-PATHS = dict(#conlc_initial_page = '',
+PATHS = dict(conlc_initial_page = 'conlc_initial_page.txt',
              conlc_data_page_first_page = 'conlc_data_page_first_page.txt',
-             #conlc_data_page_last_page = '',
-             #conlc_data_page_11th_page = 'conlc_data_page_11th_page',
+             conlc_data_page_last_page = 'conlc_data_page_last_page.txt',
+             conlc_data_page_11th_page = 'conlc_data_page_11th_page.txt',
              siafi_initial_page = 'siafi_initial_page.txt')
 
 # helper function

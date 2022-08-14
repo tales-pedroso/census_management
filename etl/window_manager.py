@@ -1,10 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Sat Aug  6 03:21:50 2022
-
-@author: Tales
-"""
-
 import win32gui, win32com.client
 import re
 

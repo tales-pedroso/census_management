@@ -1,88 +1,166 @@
+# -*- coding: utf-8 -*-
 '''
 extract LCs from Siafi HoD (legacy system)
 '''
 
-import pyautogui as p
-import pyperclip
-import time
 from window_manager import WindowMgr
 from os import sep
-from collections import deque
+from pages import SiafiInitialPage1, SiafiLogin, SiafiMenu, ConlcInitialPage, ConlcDataPage, ConlcEntrance
+from credentials import CPF, SIAFI_PASS
+from config import SYSTEM_NAME, SYSTEM_YEAR, CONLC_COMMAND
+from pages import Scraper
 
-RAW_FOLDER = 'C:\\Users\\Tales\\Desktop\\census_management\\data_lake\\raw'
+# ONE PAGE FUNCTIONS
+# They could be generalized into classes, but they would get harder to read
 
-class Scraper:
+def start_siafi(scraper):
     hod_name = 'Terminal 3270'
-    from_point = (470,  400)
-    to_point   = (1020, 400)
+    scraper.set_window_to_foreground(hod_name)
+
+def set_system_name_at_siafi_initial_page(scraper, system_name = SYSTEM_NAME):
+    siafi_initial_page1 = SiafiInitialPage1(scraper)
     
-    def __init__(self):
-        pass
+    # read and validate
+    if not siafi_initial_page1.swipe_until_it_matches_main():
+        raise Exception(f'Failed to validate the page object {siafi_initial_page1}')
     
-    def write_at(self, x, y, text):
-        text = str(text)
+    # set
+    siafi_initial_page1.set_system_name(system_name)
+    
+    # advance and validate
+    siafi_initial_page1.advance()
+    if not siafi_initial_page1.wait_until_it_leaves_page('main'):
+        raise Exception(f'Failed to move out of the page object {siafi_initial_page1}')
         
-        p.click(x, y)
-        p.write(text)
+    # report
+    print('Inserted "sf" at Siafi\'s Initial Page.')
+    
+def set_credentials_at_siafi_login(scraper, cpf = CPF, 
+                                   siafi_pass = SIAFI_PASS, system_year = SYSTEM_YEAR):
+    siafi_login = SiafiLogin(scraper)
+    
+    # read and validate
+    if not siafi_login.swipe_until_it_matches_main():
+        raise Exception(f'Failed to validate the page object {siafi_login}')
+    
+    # set
+    siafi_login.set_cpf(cpf)
+    siafi_login.set_pass(siafi_pass)
+    siafi_login.submit()
+    
+    if not siafi_login.wait_until_input_appears():
+        raise Exception(f'Failed to find the input to type the system year. Maybe the password needs to change. Page object: {siafi_login}')
+    siafi_login.set_system_year(SYSTEM_YEAR)
+    
+    # advance and validate
+    siafi_login.advance()
+    if not siafi_login.wait_until_it_leaves_page('main'):
+        raise Exception(f'Failed to move out of the page object {siafi_login}')
+    
+    # report
+    print("Inserted credentials at Siafi\'s login page.")
+    
+def set_conlc_at_siafi_menu(scraper, conlc_command = CONLC_COMMAND):
+    siafi_menu = SiafiMenu(scraper)
+    
+    # read and validate
+    if not siafi_menu.swipe_until_it_matches_main():
+        raise Exception(f'Failed to validate the page object {siafi_menu}')
+    
+    # set
+    siafi_menu.set_command(CONLC_COMMAND)
+    
+    # advance and validate
+    siafi_menu.advance()
+    if not siafi_menu.wait_until_it_leaves_page('main'):
+        raise Exception(f'Failed to move out of the page object {siafi_menu}')
+    
+    # report
+    print(f'Inserted {CONLC_COMMAND} at Siafi\'s menu.')
+    
+def set_first_lc_num(scraper, first_lc_num):
+    conlc_entrance = ConlcEntrance(scraper)
+    
+    # read and validate
+    if not conlc_entrance.swipe_until_it_matches_main():
+        raise Exception(f'Failed to validate the page object {conlc_entrance}')
+    
+    # set
+    conlc_entrance.set_lc_num(first_lc_num)
+    
+    # advance and validate
+    conlc_entrance.advance()
+    if not conlc_entrance.wait_until_it_leaves_page('main'):
+        raise Exception(f'Failed to move out of the page object {conlc_entrance}')
+    
+    # report
+    print(f'Inserted {first_lc_num} as the first LC num to search for')
+    
+def download_conlc_data_page_as_txt(scraper, last_lc_num, category_folder):
+    # initialize
+    counter = '0'
+    
+    # read and validate
+    conlc_data_page = ConlcDataPage(scraper, last_lc_num)
+    if not conlc_data_page.swipe_until_it_matches_other('current_page'):
+        raise Exception(f'Failed to validate the page object {conlc_data_page}')
+    
+    # iterate and save on disk
+    while not conlc_data_page.should_i_stop_advancing():
+        # prepare counter to be used as file name
+        counter = str(int(counter) + 1)
         
-    def set_window_to_foreground(self, window_partial_name):
-        w = WindowMgr()
-        w.find_window_wildcard(f'.*{window_partial_name}.*')
-        w.set_foreground()
+        # save
+        conlc_data_page.to_txt(category_folder, counter)
         
-    def enter(self):
-        p.press('enter')
+        # go to next page
+        conlc_data_page.advance()
         
-    def f2(self):
-        p.press('f2')
+        # validate that it actually went to the next page
+        if not conlc_data_page.wait_until_it_leaves_page('current_page'):
+            raise Exception(f'Failed to move to the next page at {conlc_data_page}.' )
         
-    def f4(self):
-        p.press('f4')
+        conlc_data_page.increment_page_num()
+        if not conlc_data_page.swipe_until_it_matches_other('current_page'):
+            raise Exception(f'Failed to validate the next page at page object {conlc_data_page}')
+            
+    '''
+    # !!! try this new implementation
+    # it stopped advancing, but we should still save the last page
+    # prepare counter to be used as file name
+    counter = str(int(counter) + 1)
         
-    def f8(self):
-        p.press('f8')
-        
-    def f12(self):
-        p.press('f12')
-        
-    def swipe(self):
-        p.moveTo(self.from_point)
-        p.dragTo(self.to_point)
-        p.hotkey('ctrl', 'c')
-        string = pyperclip.paste()
-        return string
-     
+    # save
+    conlc_data_page.to_txt(raw_folder, counter)
 
 
+    '''        
+        
+    # if only the first page is relevant, save its data
+    if counter == '0':
+        # prepare counter to be used as file name
+        counter = str(int(counter) + 1)
+        
+        # save
+        conlc_data_page.to_txt(category_folder, counter)
+
+    print(f'Downloaded {counter} LCs to {category_folder}')
+
+def extract(first_lc_num, last_lc_num, category_folder):
+    scraper = Scraper()
     
-if __name__ == '__main__':
-    # get a hold of mouse
-    hod = HoD()
+    start_siafi(scraper)
     
+    set_system_name_at_siafi_initial_page(scraper, SYSTEM_NAME)
     
-    hod.go_to_hod()
+    set_credentials_at_siafi_login(scraper, CPF, SIAFI_PASS, SYSTEM_YEAR)
     
-    string = hod.swipe()
-    conlc = ConlcInitialPage(string)
+    set_conlc_at_siafi_menu(scraper, CONLC_COMMAND)
     
-    if conlc.validate():
-        conlc.get_
-        conlc.save_as_txt(RAW_FOLDER, '1')
+    set_first_lc_num(scraper, first_lc_num)
     
-    
-    # choose_one_lc = Job()
-    # choose_one_lc.alt_tab()
-    # conlc = Conlc(choose_one_lc.get_string())
-    
-    # # time.sleep(3)
-    # # p.hotkey('alt', 'tab')
-    # # p.position()
-    
-    # OUTPUT_DIR = 'C:/Users/Tales/Desktop/census_management'
-    # import os
-    
-    # with open(OUTPUT_DIR + os.sep + str('test') + '.txt', 'w', encoding = 'utf-8') as f:
-    #     f.write(conlc.string)
+    download_conlc_data_page_as_txt(scraper, last_lc_num, category_folder)
+
 
     
 

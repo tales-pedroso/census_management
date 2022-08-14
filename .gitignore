@@ -2,5 +2,5 @@ env/
 data_lake/
 test/
 setup/
-etl/__pycache__
+etl/__pycache__/
 etl/credentials.py
