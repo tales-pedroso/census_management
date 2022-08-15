@@ -1,53 +1,51 @@
 # -*- coding: utf-8 -*-
 
-# ! fill remaining values of DimDate after each batch of insert in FactLc420
-# !!! insert line count on schema
 from connect import connect
+from credentials import DATABASE, SCHEMA
 import csv
+from config import COLUMNS_IN_CSV_FILES, TRANS_FILE_NAME
+from setup import get_folder_by_layer_name
+from os import sep
+from time import time
 
+'''
+inserted another column into dimdate
+'''
 
-def get_sql_for_procedure(db_name, schema, proc_name):
-    sql = f'EXEC [{db_name}].[{schema}].[{proc_name}]'
+def get_sql_for_procedure(proc_name):
+    sql = f'EXEC [{DATABASE}].[{SCHEMA}].[{proc_name}]'
               
     return sql
 
-
-def from_csv_into_staging2(conn, csv_path):
-    '''
-    csv is expected to be filled with null instead of empty string
-    '''
-    
-    with open(csv_path, 'r', encoding = 'utf-8') as f:
-        rows = f.readlines()
+def get_columns_sep_by_comma():
+    col_sep_by_comma = ','.join(COLUMNS_IN_CSV_FILES)
+    return col_sep_by_comma
         
-    for row in rows:
-        print(row)
-        
-def get_sql_insert(csv_file):
-    start = '''
-            INSERT INTO dbo.StagingFactLc420(LcYear, LcNum, ObYear, ObNum, WasObCanceled)
-            VALUES 
-            '''
+def get_sql_for_insert(csv_file_path, table_name):
+    # this needs to be generalized later
+    cols = get_columns_sep_by_comma()
+    start = f'''
+             INSERT INTO {SCHEMA}.{table_name}({cols})
+             VALUES 
+             '''
             
     string = start
         
-    with open(csv_file, 'r', encoding = 'utf-8') as f:
+    with open(csv_file_path, 'r', encoding = 'utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
-            line = '({LcYear}, {LcNum}, {ObYear}, {ObNum}, {WasObCanceled}),'.format(**row)
+            line = '({LcYear}, {LcNum}, {LineCount}, {ObYear}, {ObNum}, {WasObCanceled}),'.format(**row)
             string += line
     
     string = string[:-1] # take away last char in string, which is the trailing comma
     
     return string
 
-def get_sql_delete(db_name, schema, table_name):
-    string = f'DELETE FROM [{db_name}].[{schema}].[{table_name}]'
+def get_sql_for_truncate(table_name):
+    string = f'DELETE FROM [{DATABASE}].[{SCHEMA}].[{table_name}]'
     return string
         
-def pass_string_to_db(string):
-    # has to be inside try because if it fails, the connection doesn't close
-    conn = connect()
+def pass_string_to_db(string, conn):
     cursor = conn.cursor()
     try:
         cursor.execute(string)
@@ -56,38 +54,65 @@ def pass_string_to_db(string):
         raise e
     finally:
         cursor.close()
-        conn.close()
+        
+def update_days_ago_column(conn):
+    string = get_sql_for_procedure('UpdateDaysAgo')
+    pass_string_to_db(string, conn)
+    
+    print('Updated DaysAgo Column in DimDate table')
     
 
-if __name__ == '__main__':
-    path = 'C:\\Users\\Tales\\Desktop\\census_management\\setup\\fact_table_test.csv'
+def update_work_days_ago_column(conn):
+    string = get_sql_for_procedure('UpdateWorkDaysAgo')
+    pass_string_to_db(string, conn)
+    
+    print('Updated WorkDaysAgo Column in DimDate table')
+    
+def truncate_staging(conn):
+    string = get_sql_for_truncate('StagingFactLc')
+    pass_string_to_db(string, conn)
+    
+    print('Trucated StagingFactLc table')
+    
+def insert_into_staging_from_csv(conn):
+    folder = get_folder_by_layer_name('transformed')
+    csv_file_path = folder + sep + TRANS_FILE_NAME + '.csv'
+    
+    string = get_sql_for_insert(csv_file_path, 'StagingFactLc')
+    pass_string_to_db(string, conn)
+    
+    print('Inserted data from transformed into StagingFactLc table')
+
+def merge_staging_and_fact_tables(conn):
+    string = get_sql_for_procedure('MergeStagingAndFactTable')
+    pass_string_to_db(string, conn)
+    
+    print('Merged Staging and Fact tables')
+
+def load():
+    start = time()
+    
+    conn = connect()
     
     # update DimDate so that DaysAgo make sense
-    string = get_sql_for_procedure('census', 'dbo', 'UpdateDaysAgo')
-    pass_string_to_db(string)
+    update_days_ago_column(conn)
     
     # update DimDate so that WorkDaysAgo make sense
+    update_work_days_ago_column(conn)
     
-    # delete everything from staging, the csv_file is the official backup
-    # staging should be replaced by some procedure in the future
-    string = get_sql_delete('census', 'dbo', 'StagingFactLc420')
-    pass_string_to_db(string)
+    # truncate staging table, so that we can upsert the most recent data
+    truncate_staging(conn)
     
-    # insert into staging
-    string = get_sql_insert(path)
-    pass_string_to_db(string)
-    
-    # get which obs are new comparing staging and factable
-    
-    # get which obs were canceled since the last update
+    # insert updated data into Staging table
+    insert_into_staging_from_csv(conn)
     
     # merge staging and fact table
-    sql = get_sql_for_procedure('census', 'dbo', 'MergeStagingAndFactTable')
-    pass_string_to_db(sql)
+    merge_staging_and_fact_tables(conn)
     
-    # prompt user to get the obNumber of new obs
+    conn.close()
     
-    # (future) get the list of LCs that need to be extracted for the day
-
-
+    end = time()
+    
+    total = end - start
+    print(f'Finished loading data into database. Time spent: {total}')
    

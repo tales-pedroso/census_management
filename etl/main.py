@@ -1,23 +1,22 @@
 # -*- coding: utf-8 -*-
 from setup import setup
-from extract import extract
+from extract import extract, mock_extract
 from transform import transform
 from load import load
+from config import FIRST_LC_NUM, LAST_LC_NUM
 
-from config import CAT420RAWFOLDER, CAT420TRANSFOLDER
 
+# needs to delete stuff after everything is said and done
 
 def main():
     #
-    extract(first_lc_num = '',
-            last_lc_num  = '',
-            category_folder = CAT520RAWFOLDER)
+    setup()
     
-    transform(first_lc_num = '',
-              last_lc_num  = '',
-              raw_category_folder   = CAT520RAWFOLDER,
-              trans_category_folder = CAT520TRANSFOLDER)
+    extract(FIRST_LC_NUM, LAST_LC_NUM)
     
-    load(trans_category_folder = CAT520TRANSFOLDER)
+    transform()
+    
+    load()
 
-
+if __name__ == '__main__':
+    main()

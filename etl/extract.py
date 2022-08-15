@@ -3,21 +3,20 @@
 extract LCs from Siafi HoD (legacy system)
 '''
 
-from window_manager import WindowMgr
-from os import sep
-from pages import SiafiInitialPage1, SiafiLogin, SiafiMenu, ConlcInitialPage, ConlcDataPage, ConlcEntrance
+from pages import SiafiInitialPage1, SiafiLogin, SiafiMenu, ConlcDataPage, ConlcEntrance
 from credentials import CPF, SIAFI_PASS
-from config import SYSTEM_NAME, SYSTEM_YEAR, CONLC_COMMAND
+from config import SYSTEM_NAME, SYSTEM_YEAR, CONLC_COMMAND, SCREEN_NAME
+from setup import get_folder_by_layer_name
 from pages import Scraper
+from time import time
 
 # ONE PAGE FUNCTIONS
 # They could be generalized into classes, but they would get harder to read
 
 def start_siafi(scraper):
-    hod_name = 'Terminal 3270'
-    scraper.set_window_to_foreground(hod_name)
+    scraper.set_window_to_foreground(SCREEN_NAME)
 
-def set_system_name_at_siafi_initial_page(scraper, system_name = SYSTEM_NAME):
+def set_system_name_at_siafi_initial_page(scraper):
     siafi_initial_page1 = SiafiInitialPage1(scraper)
     
     # read and validate
@@ -25,7 +24,7 @@ def set_system_name_at_siafi_initial_page(scraper, system_name = SYSTEM_NAME):
         raise Exception(f'Failed to validate the page object {siafi_initial_page1}')
     
     # set
-    siafi_initial_page1.set_system_name(system_name)
+    siafi_initial_page1.set_system_name(SYSTEM_NAME)
     
     # advance and validate
     siafi_initial_page1.advance()
@@ -35,8 +34,7 @@ def set_system_name_at_siafi_initial_page(scraper, system_name = SYSTEM_NAME):
     # report
     print('Inserted "sf" at Siafi\'s Initial Page.')
     
-def set_credentials_at_siafi_login(scraper, cpf = CPF, 
-                                   siafi_pass = SIAFI_PASS, system_year = SYSTEM_YEAR):
+def set_credentials_at_siafi_login(scraper):
     siafi_login = SiafiLogin(scraper)
     
     # read and validate
@@ -44,8 +42,8 @@ def set_credentials_at_siafi_login(scraper, cpf = CPF,
         raise Exception(f'Failed to validate the page object {siafi_login}')
     
     # set
-    siafi_login.set_cpf(cpf)
-    siafi_login.set_pass(siafi_pass)
+    siafi_login.set_cpf(CPF)
+    siafi_login.set_pass(SIAFI_PASS)
     siafi_login.submit()
     
     if not siafi_login.wait_until_input_appears():
@@ -60,7 +58,7 @@ def set_credentials_at_siafi_login(scraper, cpf = CPF,
     # report
     print("Inserted credentials at Siafi\'s login page.")
     
-def set_conlc_at_siafi_menu(scraper, conlc_command = CONLC_COMMAND):
+def set_conlc_at_siafi_menu(scraper):
     siafi_menu = SiafiMenu(scraper)
     
     # read and validate
@@ -96,7 +94,7 @@ def set_first_lc_num(scraper, first_lc_num):
     # report
     print(f'Inserted {first_lc_num} as the first LC num to search for')
     
-def download_conlc_data_page_as_txt(scraper, last_lc_num, category_folder):
+def download_conlc_data_page_as_txt(scraper, last_lc_num, raw_folder):
     # initialize
     counter = '0'
     
@@ -111,7 +109,7 @@ def download_conlc_data_page_as_txt(scraper, last_lc_num, category_folder):
         counter = str(int(counter) + 1)
         
         # save
-        conlc_data_page.to_txt(category_folder, counter)
+        conlc_data_page.to_txt(raw_folder, counter)
         
         # go to next page
         conlc_data_page.advance()
@@ -124,18 +122,21 @@ def download_conlc_data_page_as_txt(scraper, last_lc_num, category_folder):
         if not conlc_data_page.swipe_until_it_matches_other('current_page'):
             raise Exception(f'Failed to validate the next page at page object {conlc_data_page}')
             
-    '''
-    # !!! try this new implementation
+    
+    # try this new implementation
     # it stopped advancing, but we should still save the last page
     # prepare counter to be used as file name
     counter = str(int(counter) + 1)
         
     # save
     conlc_data_page.to_txt(raw_folder, counter)
+    
+    # report
+    print(f'Downloaded {counter} LC pages to {raw_folder}')
 
 
-    '''        
-        
+         
+    '''    
     # if only the first page is relevant, save its data
     if counter == '0':
         # prepare counter to be used as file name
@@ -143,23 +144,35 @@ def download_conlc_data_page_as_txt(scraper, last_lc_num, category_folder):
         
         # save
         conlc_data_page.to_txt(category_folder, counter)
+    '''
 
-    print(f'Downloaded {counter} LCs to {category_folder}')
-
-def extract(first_lc_num, last_lc_num, category_folder):
+def extract(first_lc_num, last_lc_num):
+    print(f'Starting extraction from {first_lc_num} to {last_lc_num}')
+    start = time()
+    
+    raw_folder = get_folder_by_layer_name('raw')
+    
     scraper = Scraper()
     
     start_siafi(scraper)
     
-    set_system_name_at_siafi_initial_page(scraper, SYSTEM_NAME)
+    set_system_name_at_siafi_initial_page(scraper)
     
-    set_credentials_at_siafi_login(scraper, CPF, SIAFI_PASS, SYSTEM_YEAR)
+    set_credentials_at_siafi_login(scraper)
     
-    set_conlc_at_siafi_menu(scraper, CONLC_COMMAND)
+    set_conlc_at_siafi_menu(scraper)
     
     set_first_lc_num(scraper, first_lc_num)
     
-    download_conlc_data_page_as_txt(scraper, last_lc_num, category_folder)
+    download_conlc_data_page_as_txt(scraper, last_lc_num, raw_folder)
+    
+    end = time()
+    total_time = end - start
+    
+    print(f'Finished LC extraction. Time spent: {total_time}')
+    
+def mock_extract():
+    print('Pretended to finish extraction')
 
 
     
