@@ -3,15 +3,20 @@
 extract LCs from Siafi HoD (legacy system)
 '''
 
-from pages import SiafiInitialPage1, SiafiLogin, SiafiMenu, ConlcDataPage, ConlcEntrance
+from pages import (SiafiInitialPage1, SiafiLogin, SiafiMenu, ConlcDataPage, ConlcEntrance,
+                   ConobEntrance, ConobDataPage)
 from credentials import CPF, SIAFI_PASS
-from config import SYSTEM_NAME, SYSTEM_YEAR, CONLC_COMMAND, SCREEN_NAME
+from config import SYSTEM_NAME, SYSTEM_YEAR, CONLC_COMMAND, CONOB_COMMAND, SCREEN_NAME
 from setup import get_folder_by_layer_name
-from pages import Scraper
 from time import time
 
 # ONE PAGE FUNCTIONS
-# They could be generalized into classes, but they would get harder to read
+# They could be generalized into classes
+# they always take a page object
+# they always validata they are in the right page
+# they do something in that page
+# then they move out of that page and validate
+# they always throw exceptions (timeout exception, basically)
 
 def start_siafi(scraper):
     scraper.set_window_to_foreground(SCREEN_NAME)
@@ -122,8 +127,6 @@ def download_conlc_data_page_as_txt(scraper, last_lc_num, raw_folder):
         if not conlc_data_page.swipe_until_it_matches_other('current_page'):
             raise Exception(f'Failed to validate the next page at page object {conlc_data_page}')
             
-    
-    # try this new implementation
     # it stopped advancing, but we should still save the last page
     # prepare counter to be used as file name
     counter = str(int(counter) + 1)
@@ -134,25 +137,11 @@ def download_conlc_data_page_as_txt(scraper, last_lc_num, raw_folder):
     # report
     print(f'Downloaded {counter} LC pages to {raw_folder}')
 
-
-         
-    '''    
-    # if only the first page is relevant, save its data
-    if counter == '0':
-        # prepare counter to be used as file name
-        counter = str(int(counter) + 1)
-        
-        # save
-        conlc_data_page.to_txt(category_folder, counter)
-    '''
-
-def extract(first_lc_num, last_lc_num):
+def extract_lc_needs(scraper, first_lc_num, last_lc_num):
     print(f'Starting extraction from {first_lc_num} to {last_lc_num}')
     start = time()
     
     raw_folder = get_folder_by_layer_name('raw')
-    
-    scraper = Scraper()
     
     start_siafi(scraper)
     
@@ -173,8 +162,136 @@ def extract(first_lc_num, last_lc_num):
     
 def mock_extract():
     print('Pretended to finish extraction')
+    
+#==============================================================================
 
-
+def leave_conlc_data_page(scraper):
+    # it is not always the case that goes back to Conlc entrance. 
+    # if the system is left hanging, it moves all the way up to login again
+    conlc_data_page = ConlcDataPage(scraper)
+    
+    # assert we are still on Conlc data page
+    if not conlc_data_page.swipe_until_it_matches_main():
+        raise Exception(f'Expected to be in page object {conlc_data_page}, but it is not')
+    
+    # go back and validate
+    conlc_data_page.go_back()
+    if not conlc_data_page.wait_until_it_leaves_page('main'):
+        raise Exception(f'Failed to move out of page object {conlc_data_page}')
+        
+    print('Moved out of Conlc data page')
+    
+def leave_conlc_entrance(scraper):
+    conlc_entrance = ConlcEntrance(scraper)
+    
+    # assert we are still on Conlc entrance
+    if not conlc_entrance.swipe_until_it_matches_main():
+        raise Exception(f'Expected to be in page object {conlc_entrance}, but it is not')
+    
+    # go back and validate
+    conlc_entrance.go_back()
+    if not conlc_entrance.wait_until_it_leaves_page('main'):
+        raise Exception(f'Failed to move out of page object {conlc_entrance}')
+        
+    print('Moved out of Conlc entrance')
+    
+def set_conob_at_siafi_menu(scraper):
+    siafi_menu = SiafiMenu(scraper)
+    
+    # read and validate
+    if not siafi_menu.swipe_until_it_matches_main():
+        raise Exception(f'Failed to validate the page object {siafi_menu}')
+    
+    # set
+    siafi_menu.set_command(CONOB_COMMAND)
+    
+    # advance and validate
+    siafi_menu.advance()
+    if not siafi_menu.wait_until_it_leaves_page('main'):
+        raise Exception(f'Failed to move out of the page object {siafi_menu}')
+    
+    # report
+    print(f'Inserted {CONOB_COMMAND} at Siafi\'s menu.')
+    
+def set_ob_num(scraper, ob_num):
+    conob_entrance = ConobEntrance(scraper)
+    
+    # read and validate
+    if not conob_entrance.swipe_until_it_matches_main():
+        raise Exception(f'Failed to validate the page object {conob_entrance}')
+    
+    # set
+    conob_entrance.set_ob_num(ob_num)
+    
+    # advance and validate
+    conob_entrance.advance()
+    if not conob_entrance.wait_until_it_leaves_page('main'):
+        raise Exception(f'Failed to move out of the page object {conob_entrance}')
+    
+    # report
+    print(f'Inserted {ob_num} at page object {conob_entrance}')
+    
+def get_ob_date_and_go_back(scraper, ob_num):
+    conob_data_page = ConobDataPage(scraper, ob_num)
+    
+    # read and validate
+    if not conob_data_page.swipe_until_it_matches_main():
+        raise Exception(f'Failed to validate the page object {conob_data_page}')
+        
+    if not conob_data_page.is_wanted_ob_on_page():
+        raise Exception(f'Failed to find {ob_num} as the first OB on page.')
+        
+    # get
+    ob_date = conob_data_page.get_date_of_first_ob_on_page()
+    
+    # report
+    print(f'Got {ob_date} for {ob_num}')
+    
+    # leave and validate
+    conob_data_page.go_back()
+    if not conob_data_page.wait_until_it_leaves_page('main'):
+        raise Exception(f'Failed to leave the page object {conob_data_page}')
+        
+    # report
+    print(f'Left the page object {conob_data_page}')
+    return ob_date
+    
+def get_multiple_ob_dates(scraper, obs_for_siafi):
+    # assumes we start at conob entrance
+    raw_dates = []
+    
+    for ob_num in obs_for_siafi:
+        set_ob_num(scraper, ob_num)
+        ob_date = get_ob_date_and_go_back(scraper, ob_num)
+        raw_dates.append(ob_date)
+        
+    return raw_dates
+    
+def extract_ob_dates(scraper, obs_for_siafi):
+    # assumes it is in Conlc Data Page
+    print('Starting extracion of OB dates in Siafi.')
+    
+    start_siafi(scraper)
+    
+    leave_conlc_data_page(scraper) 
+    
+    set_conob_at_siafi_menu(scraper)
+    
+    raw_dates = get_multiple_ob_dates(scraper, obs_for_siafi)
+    
+    print('Finished extraction of OB dates in Siafi')
+    # leaves user in ConobEntrance
+    
+    return raw_dates
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
 
 

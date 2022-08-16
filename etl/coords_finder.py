@@ -3,12 +3,13 @@
 
 import pyautogui as p
 import time
-from extract import Scraper
+from pages import Scraper
+from extract import start_siafi
 
 if __name__ == '__main__':
     scraper = Scraper()
-    
-    scraper.set_window_to_foreground(scraper.hod_name)
+    start_siafi(scraper)
+
 
     time.sleep(2)
     coords = p.position()

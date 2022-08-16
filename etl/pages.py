@@ -6,6 +6,9 @@ import pdb
 from window_manager import WindowMgr
 from pyperclip import paste
 
+# validations should be a class with all the data
+# that data will be used by the where_am_i function
+
 #==============================================================================
 # DECORATORS
 
@@ -69,6 +72,9 @@ class Scraper:
     def f2(self):
         p.press('f2')
         
+    def f3(self):
+        p.press('f3')
+        
     def f4(self):
         p.press('f4')
         
@@ -77,6 +83,9 @@ class Scraper:
         
     def f12(self):
         p.press('f12')
+        
+    def alt_tab(self):
+        p.hotkey('alt', 'tab')
         
     def swipe(self):
         p.moveTo(self.from_point)
@@ -114,7 +123,7 @@ class Page():
         mapping     = self._get_mapping(name, 'validation')
         slice_      = mapping['slice_']
         to_validate = mapping['to_validate']
-        processing  = mapping.get('processing', None)
+        processing  = mapping.get('processing', None) # defaults to None if there is no processing to be done
         
         if processing is None:
             is_valid = string[slice_] == to_validate
@@ -154,8 +163,6 @@ class Page():
     def swipe_until_it_matches_other(self, name):
         string = self.scraper.swipe()
         
-        #pdb.set_trace()
-        
         is_valid = self._validate_other(string, name)
         
         if is_valid:
@@ -169,7 +176,7 @@ class Page():
         string = self.scraper.swipe()
         
         # name will be main when we are leaving a page. It will be other, 
-        # when we are dealing with different versions of a page
+        # when we are dealing with different versions of the same page
         is_still_on_page = self._validate_other(string, name) 
         
         if not is_still_on_page:
@@ -260,8 +267,8 @@ class SiafiLogin(Page):
 
 class SiafiMenu(Page):
     validation = [dict(name       = 'main',
-                       slice_      = slice(678, 714),
-                       to_validate = 'ADMINISTRA ADMINISTRACAO  DO SISTEMA')]
+                       slice_      = slice(1723, 1802),
+                       to_validate = 'COMANDO: ______________________________________________________________________')]
     
     setter = [dict(name   = 'command_input', 
                    coords = dict(x = 577,
@@ -290,6 +297,9 @@ class ConlcEntrance(Page):
     def advance(self):
         self.scraper.enter()
         
+    def go_back(self):
+        self.scraper.f3()
+        
 ######
         
 class ConlcDataPage(Page):
@@ -298,7 +308,7 @@ class ConlcDataPage(Page):
                        to_validate = 'NUMERO   ATUALIZADO EM QTD              VALOR TOTAL   NUMERO OB   SIT. OBS'),
                   
                   dict(name        = 'current_page',
-                       slice_      = slice(228, 231), # assumes highest page is 100
+                       slice_      = slice(228, 231), # assumes highest page is 999
                        to_validate = '1', # always start at page 1
                        processing  = strip_and_no_dots),
                   
@@ -309,9 +319,12 @@ class ConlcDataPage(Page):
     getter = [dict(name   = 'last_lc_on_page',
                    slice_ = slice(1650, 1656))]
         
-    def __init__(self, scraper, highest_lc_num_wanted):
+    def __init__(self, scraper, highest_lc_num_wanted = None):
         super().__init__(scraper)
-        self.highest_lc_num_wanted = highest_lc_num_wanted
+        
+        # this is only required if we are getting data, which is not always the case
+        if highest_lc_num_wanted:
+            self.highest_lc_num_wanted = highest_lc_num_wanted 
         
     def increment_page_num(self):
         mapping = self._get_mapping('current_page', 'validation')
@@ -339,7 +352,61 @@ class ConlcDataPage(Page):
     def advance(self):
         self.scraper.f8()
         
+    def go_back(self):
+        self.scraper.f3()
+        
 #==============================================================================
+class ConobEntrance(Page):
+    validation = [dict(name        = 'main',
+                       slice_      = slice(658, 690),
+                       to_validate = 'NUMERO BANCARIO     : __________')]     
+    
+    setter = [dict(name   = 'ob_input',
+                   coords = dict(x = 833,
+                                 y = 407))]      
+    
+    def set_ob_num(self, ob_num):
+        self._write('ob_input', ob_num)
+        
+    def advance(self):
+        self.scraper.enter()
+        
+        
+class ConobDataPage(Page):
+    validation = [dict(name        = 'main',
+                       slice_      = slice(166, 192), 
+                       to_validate = 'ORDENS BANCARIAS EMITIDAS '),
+                  dict(name = 'first_ob_on_page',
+                       slice_ = slice(496, 502),
+                       to_validate = None)] # gets its valued when instantiated
+    
+    getter = [dict(name   = 'first_ob_on_page',
+                   slice_ = slice(496, 502)),
+              dict(name   = 'first_date_on_page',
+                   slice_ = slice(506, 513))]
+    
+    def __init__(self, scraper, wanted_ob = None):
+        super().__init__(scraper)
+        
+        if wanted_ob:
+            # this allows us to use the validation method provided by the base class
+            self._get_mapping('first_ob_on_page', 'validation')['to_validate'] = wanted_ob
+
+    def is_wanted_ob_on_page(self):
+        return self._validate_other(self.string, 'first_ob_on_page')
+    
+    def get_date_of_first_ob_on_page(self):
+        ob_date = self._get(self.string, 'first_date_on_page')
+        return ob_date
+    
+    def go_back(self):
+        self.scraper.f12()
+        
+    
+    
+
+'''
+delete this after making sure it is not used anymore
 # HIGH-LEVEL FUNCTIONS
 # They may be generalized, but they would get harder to read
 # it is still hardcoded
@@ -453,18 +520,6 @@ def download_conlc_data_page_as_txt(scraper, last_conlc_num, raw_folder):
         conlc_data_page.increment_page_num()
         if not conlc_data_page.swipe_until_it_matches_other('current_page'):
             raise Exception(f'Failed to validate the next page at page object {conlc_data_page}')
-            
-    '''
-    # !!! try this new implementation
-    # it stopped advancing, but we should still save the last page
-    # prepare counter to be used as file name
-    counter = str(int(counter) + 1)
-        
-    # save
-    conlc_data_page.to_txt(raw_folder, counter)
-
-
-    '''        
         
     # if only the first page is relevant, save its data
     if counter == '0':
@@ -476,28 +531,6 @@ def download_conlc_data_page_as_txt(scraper, last_conlc_num, raw_folder):
 
     print(f'Downloaded {counter} LCs to {raw_folder}')
     
-
-        
-if __name__ == '__main__':
-    # bug: it doesn't get the last page because it stops advancing 
-    '''
-    first_conlc_num = '420000'
-    last_conlc_num =  '421029'
-    raw_folder = RAW_FOLDER
-    
-    scraper = Scraper()
-    
-    start_siafi(scraper)
-    
-    set_sf_at_siafi_initial_page(scraper)
-    
-    set_credentials_at_siafi_login(scraper)
-    
-    set_conlc_at_siafi_menu(scraper)
-    
-    set_first_conlc_num(scraper, first_conlc_num)
-    
-    download_conlc_data_page_as_txt(scraper, last_conlc_num, raw_folder)
-    '''
+'''
     
     

@@ -16,6 +16,7 @@ SCREEN_NAME   = 'Terminal 3270'
 SYSTEM_NAME   = 'sf'
 SYSTEM_YEAR   = 'siafi2022'
 CONLC_COMMAND = '>conlc'
+CONOB_COMMAND = '>conob'
 
 # TRANSFORM RELATED VALUES
 STAND_FILE_NAME = 'standardized'
@@ -23,7 +24,7 @@ TRANS_FILE_NAME = 'transformed'
 COLUMNS_IN_CSV_FILES = ('LcYear', 'LcNum', 'LineCount', 'ObYear', 'ObNum', 'WasObCanceled')
 CANCELED_VALUES = ('CANC.P', 'CANC.T')
 WANTED_INTERVALS = (('420000', '420999'), # start, finish
-                    ('520100', '520999'), # start, finish
+                    ('520190', '520999'), # start, finish
                     ('620172', '620999')) # start, finish
 
 ## VALUES SPECIFIC TO CONLC DATA PAGE
@@ -54,4 +55,18 @@ DATA_INDEXES = (slice(0, 4),    # lc year       --> 2022
                 slice(60, 66),  # ob number     --> 831021
                 slice(67, 73))  # was_canceled? --> CANC.P 
                #slice(74, 75))  # was_closed?   --> F --> we don't want that info
+               
+# MONTHS MAPPING FROM SIAFI TO DATABASE
+MONTHS = dict(Jan = '01',
+              Fev = '02',
+              Mar = '03',
+              Abr = '04',
+              Mai = '05',
+              Jun = '06',
+              Jul = '07',
+              Ago = '08',
+              Set = '09',
+              Out = '10',
+              Nov = '11',
+              Dez = '12')
 

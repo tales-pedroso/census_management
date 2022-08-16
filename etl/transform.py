@@ -5,7 +5,8 @@ from os import sep
 import pandas as pd
 from setup import get_folder_by_layer_name
 from config import (STAND_FILE_NAME, WANTED_INTERVALS, COLUMNS_IN_CSV_FILES,
-                   ROWS_INDEXES, DATA_INDEXES, TRANS_FILE_NAME, CANCELED_VALUES)
+                   ROWS_INDEXES, DATA_INDEXES, TRANS_FILE_NAME, CANCELED_VALUES,
+                   MONTHS)
 
 # it would be more efficient if we could traverse the string in its order
 # getting the (first row, first col), then (second row, second col)
@@ -168,3 +169,28 @@ def transform():
     print(f'Finished transforming standardized into transformed. Time spent: {total_stand}')
     
 #################################################################################    
+# Functions related to Ob_date
+
+def correct_one_date(date_in_str):
+    '''
+    assumes the given date is from 2000 to 2099
+    '''
+    # always a 7-char long string when it comes from conob
+    if len(date_in_str) != 7:
+        raise Exception(f'Given string is not a 7-char long string. Got {date_in_str}')
+        
+    d = date_in_str[0:2]
+    m = MONTHS.get(date_in_str[2:5])
+    y = '20' + date_in_str[5:7]
+    
+    return '-'.join([y, m, d])
+
+def get_dates_into_db_format(raw_dates):
+    # database is always yyyy-mm-dd
+    # siafi is always dd-mm-yy
+    processed_dates = [*map(correct_one_date, raw_dates)]
+    return processed_dates
+
+
+if __name__ == '__main__':
+    df = get_df_from_stand()
