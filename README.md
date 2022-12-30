@@ -28,7 +28,7 @@
 
   </ol>
 </details>
-</p>
+</div>
 
 
 ## About The Project
