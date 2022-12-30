@@ -3,7 +3,7 @@
 <br />
 <div align="center">
   <a href="https://ibge.gov.br/">
-    <img src="images/censo.png" alt="Logo" width="80" height="80">
+    <img src="image/censo.png" alt="Logo" width="80" height="80">
   </a>
 
   <h3 align="center">Census Management</h3>
@@ -30,7 +30,7 @@
 
   </ol>
 </details>
-
+</p>
 
 
 ## About The Project
