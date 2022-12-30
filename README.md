@@ -1,9 +1,7 @@
-
-<!-- PROJECT LOGO -->
 <br />
 <div align="center">
   <a href="https://ibge.gov.br/">
-    <img src="image/censo.png" alt="Logo" width="80" height="80">
+    <img src="image/censo.png" alt="Logo" width="408" height="500">
   </a>
 
   <h3 align="center">Census Management</h3>
