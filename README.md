@@ -1,15 +1,15 @@
 <br />
 <div align="center">
-  <a href="https://ibge.gov.br/">
-    <img src="image/censo.png" alt="Logo" width="408" height="500">
-  </a>
-
   <h3 align="center">Census Management</h3>
 
   <p align="center">
     Database-backed RPA solution 
+  </p>
+  <a href="https://ibge.gov.br/">
+    <img src="image/censo.png" alt="Logo" width="200" height="200">
+  </a>
 
-<!-- TABLE OF CONTENTS -->
+
 <details>
   <summary>Table of Contents</summary>
   <ol>
