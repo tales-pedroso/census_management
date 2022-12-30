@@ -6,7 +6,7 @@
     Database-backed RPA solution 
   </p>
   <a href="https://ibge.gov.br/">
-    <img src="image/censo.png" alt="Logo" width="200" height="200">
+    <img src="image/censo.png" alt="Logo" width="150" height="150">
   </a>
 
 
