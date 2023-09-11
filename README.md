@@ -33,7 +33,7 @@
 
 ## About The Project
 
-Brazilian Census is one of the biggest government operations in the country. It employs over a 100.000 people and presents unique challenges regarding payroll activities. This application solves a critical issue identified in a previous census: management of the canceled payments.
+Brazilian Census is one of the biggest government operations in the country. It employs over a 100,000 people and presents unique challenges regarding payroll activities. This application solves a critical issue identified in a previous census: management of the canceled payments.
 Many financial operations at the federal level are still done through a legacy system based on a 3270 terminal emulation (https://www.serpro.gov.br/links-fixos-superiores/emulador-hod/emulador-hod). While modern web-based applications do exist, for canceled payments the only real-time solution requires using a system that was not built for bulk processing of data.
 This is a one-man army project, implemented when I was a financial analyst at IBGE. 
 
